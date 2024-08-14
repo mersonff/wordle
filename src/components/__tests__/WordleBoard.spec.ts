@@ -11,4 +11,14 @@ describe('WordleBoard', () => {
 
     expect(wrapper.text()).toContain(VICTORY_MESSAGE)
   })
+
+  it('a defeat message is displayed when the user makes a guess that matches the word of the day', async () => {
+    const wrapper = mount(WordleBoard, { props: { wordOfTheDay: 'hello' } })
+
+    const guessInput = wrapper.find('input[type="text"]')
+    await guessInput.setValue('wrong')
+    await guessInput.trigger('keydown.enter')
+
+    expect(wrapper.text()).toContain('Better luck next time!')
+  })
 })
