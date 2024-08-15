@@ -5,9 +5,7 @@ import { ref } from 'vue'
 defineProps({
   wordOfTheDay: {
     type: String,
-    validator: (wordGiven: string) => wordGiven.length === 5
-      && wordGiven === wordGiven.toUpperCase() 
-      && englishWords.includes(wordGiven),
+    validator: (wordGiven: string) => englishWords.includes(wordGiven),
   }
 })
 
