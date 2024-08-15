@@ -1,58 +1,69 @@
-import { mount } from '@vue/test-utils'
-import WordleBoard from '../WordleBoard.vue'
-import { VICTORY_MESSAGE, DEFEAT_MESSAGE } from '../../settings'
-describe('WordleBoard', () => {
-  let wordOfTheDay = 'hello'
-  let wrapper: ReturnType<typeof mount>
+import {mount} from "@vue/test-utils"
+import WordleBoard from "../WordleBoard.vue"
+import {DEFEAT_MESSAGE, VICTORY_MESSAGE} from "../../settings"
+import {beforeEach} from "vitest"
 
-  beforeEach(() => {
-    wrapper = mount(WordleBoard, { props: { wordOfTheDay } })
-  })
+describe("WordleBoard", () => {
+    let wordOfTheDay = "TESTS"
+    let wrapper: ReturnType<typeof mount>
 
-  async function makeGuess(guess: string) {
-    const guessInput = wrapper.find('input[type="text"]')
-    await guessInput.setValue(guess)
-    await guessInput.trigger('keydown.enter')
-  }
-  
-  test('a victory message is displayed when the user makes a guess that matches the word of the day', async () => {
-    await makeGuess(wordOfTheDay)
+    beforeEach(() => {
+        wrapper = mount(WordleBoard, {props: {wordOfTheDay}})
+    })
 
-    expect(wrapper.text()).toContain(VICTORY_MESSAGE)
-  })
+    async function playerSubmitsGuess(guess: string) {
+        const guessInput = wrapper.find("input[type=text]")
+        await guessInput.setValue(guess)
+        await guessInput.trigger("keydown.enter")
+    }
 
-  test('a defeat message is displayed when the user makes a guess that matches the word of the day', async () => {
-    await makeGuess('goodbye')
+    describe("End of the game messages", () => {
+        test("a victory message appears when the user makes a guess that matches the word of the day", async () => {
+            await playerSubmitsGuess(wordOfTheDay)
 
-    expect(wrapper.text()).toContain(DEFEAT_MESSAGE)
-  })
+            expect(wrapper.text()).toContain(VICTORY_MESSAGE)
+        })
 
-  test('no end-of-game message is displayed when the user makes a guess that matches the word of the day', async () => {  
-    expect(wrapper.text()).not.toContain(VICTORY_MESSAGE)
-    expect(wrapper.text()).not.toContain(DEFEAT_MESSAGE)
-  })
+        test("a defeat message appears if the user makes a guess that is incorrect", async () => {
+            await playerSubmitsGuess("WRONG")
 
-  test('if a word of the day does not have exactly 5 characters, a warning is emitted', async () => {
-    console.warn = vi.fn()
+            expect(wrapper.text()).toContain(DEFEAT_MESSAGE)
+        })
 
-    mount(WordleBoard, { props: { wordOfTheDay: 'FLY' } })
-    
-    expect(console.warn).toHaveBeenCalled()
-  })
+        test("no end-of-game message appears if the user has not yet made a guess", async () => {
+            expect(wrapper.text()).not.toContain(VICTORY_MESSAGE)
+            expect(wrapper.text()).not.toContain(DEFEAT_MESSAGE)
+        })
+    })
 
-  test('if a word of the day is not all in uppercase, a warning is emitted', async () => {
-    console.warn = vi.fn()
+    describe("Rules for defining the word of the day", () => {
+        beforeEach(() => {
+            console.warn = vi.fn()
+        })
 
-    mount(WordleBoard, { props: { wordOfTheDay: 'tests' } })
-    
-    expect(console.warn).toHaveBeenCalled()
-  })
+        test.each(
+            [
+                {wordOfTheDay: "FLY", reason: "word-of-the-day must have 5 characters"},
+                {wordOfTheDay: "tests", reason: "word-of-the-day must be all in uppercase"},
+                {wordOfTheDay: "QWERT", reason: "word-of-the-day must be a valid English word"}
+            ]
+        )("Since $reason: $wordOfTheDay is invalid, therefore a warning must be emitted", async ({wordOfTheDay}) => {
+            mount(WordleBoard, {props: {wordOfTheDay}})
 
-  test('if a word of the day is not a real word, a warning is emitted', async () => {
-    console.warn = vi.fn()
+            expect(console.warn).toHaveBeenCalled()
+        })
 
-    mount(WordleBoard, { props: { wordOfTheDay: 'HELOO' } })
-    
-    expect(console.warn).toHaveBeenCalled()
-  })
+        test("no warning is emitted if the word of the day provided is a real uppercase English word with 5 characters", async () => {
+            mount(WordleBoard, {props: {wordOfTheDay: "TESTS"}})
+
+            expect(console.warn).not.toHaveBeenCalled()
+        })
+    })
+
+    describe("Player input", () => {
+        test.todo("player guesses are limited to 5 letters")
+        test.todo("player guesses can only be submitted if they are real words")
+        test.todo("player guesses are not case-sensitive")
+        test.todo("player guesses can only contain letters")
+    })
 })
