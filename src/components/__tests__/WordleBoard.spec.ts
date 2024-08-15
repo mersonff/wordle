@@ -33,9 +33,17 @@ describe('WordleBoard', () => {
   })
 
   test('if a word of the day does not have exactly 5 characters, a warning is emitted', async () => {
-    vi.spyOn(console, 'warn')
+    console.warn = vi.fn()
 
-    mount(WordleBoard, { props: { wordOfTheDay: 'helloo' } })
+    mount(WordleBoard, { props: { wordOfTheDay: 'FLY' } })
+    
+    expect(console.warn).toHaveBeenCalled()
+  })
+
+  test('if a word of the day is not all in uppercase, a warning is emitted', async () => {
+    console.warn = vi.fn()
+
+    mount(WordleBoard, { props: { wordOfTheDay: 'heloo' } })
     
     expect(console.warn).toHaveBeenCalled()
   })
