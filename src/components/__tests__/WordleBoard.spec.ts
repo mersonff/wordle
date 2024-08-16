@@ -1,6 +1,6 @@
 import {mount} from "@vue/test-utils"
 import WordleBoard from "../WordleBoard.vue"
-import {DEFEAT_MESSAGE, VICTORY_MESSAGE, WORD_SIZE} from "../../settings"
+import {DEFEAT_MESSAGE, MAX_GUESSES_COUNT, VICTORY_MESSAGE, WORD_SIZE} from "../../settings"
 import {beforeEach, expect} from "vitest"
 
 describe("WordleBoard", () => {
@@ -24,11 +24,28 @@ describe("WordleBoard", () => {
             expect(wrapper.text()).toContain(VICTORY_MESSAGE)
         })
 
-        test("a defeat message appears if the user makes a guess that is incorrect", async () => {
-            await playerSubmitsGuess("WRONG")
+        describe.each(
+            Array.from(
+                {length: MAX_GUESSES_COUNT + 1},
+                (_, numberOfGuesses) => ({
+                    numberOfGuesses,
+                    shouldSeeTheDefeatMessage: numberOfGuesses === MAX_GUESSES_COUNT
+                })
+            )
+        )(`a defeat message should appear if the player makes incorrect guesses ${MAX_GUESSES_COUNT} times`,
+            ({numberOfGuesses, shouldSeeTheDefeatMessage}) => {
+                test(`therefore, for ${numberOfGuesses} guess(es) a defeat message should ${shouldSeeTheDefeatMessage ? "" : "not"} appear`, async () => {
+                    for (let i = 0; i < numberOfGuesses; i++) {
+                        await playerSubmitsGuess("WRONG")
+                    }
 
-            expect(wrapper.text()).toContain(DEFEAT_MESSAGE)
-        })
+                    if (shouldSeeTheDefeatMessage) {
+                        expect(wrapper.text()).toContain(DEFEAT_MESSAGE)
+                    } else {
+                        expect(wrapper.text()).not.toContain(DEFEAT_MESSAGE)
+                    }
+                })
+            })
 
         test("no end-of-game message appears if the user has not yet made a guess", async () => {
             expect(wrapper.text()).not.toContain(VICTORY_MESSAGE)
@@ -61,6 +78,19 @@ describe("WordleBoard", () => {
     })
 
     describe("Player input", () => {
+        test("remains in focus the entire time", async () => {
+            document.body.innerHTML = `<div id="app"></div>`
+            wrapper = mount(WordleBoard, {
+                props: {wordOfTheDay},
+                attachTo: "#app"
+            })
+
+            expect(wrapper.find("input[type=text]").attributes("autofocus")).not.toBeUndefined()
+
+            await wrapper.find("input[type=text]").trigger("blur")
+            expect(document.activeElement).toBe(wrapper.find("input[type=text]").element)
+        })
+
         test(`player guesses are limited to ${WORD_SIZE} letters`, async () => {
             await playerSubmitsGuess(wordOfTheDay + "EXTRA")
 
