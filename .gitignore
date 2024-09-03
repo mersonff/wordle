@@ -28,3 +28,4 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+/cypress/snapshots/cypress/**/__diff_output__/
